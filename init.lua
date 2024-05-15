@@ -17,6 +17,9 @@ vim.o.softtabstop = 4
 vim.o.shiftwidth = 4
 vim.o.textwidth = 120
 vim.o.cc = "120"
+vim.o.foldmethod="expr"
+vim.o.foldexpr="nvim_treesitter#foldexpr()"
+vim.o.foldenable = false
 vim.g.mapleader = ","
 local function map(mode, shortcut, command)
   vim.api.nvim_set_keymap(mode, shortcut, command, { noremap = true, silent = true })
@@ -68,6 +71,10 @@ require("lazy").setup({
     lazy = false,     -- we don't want to lazy load VimTeX
     init = function()
     end
+  },
+  {
+    "nvim-treesitter/nvim-treesitter",
+    build = ":TSUpdate"
   }
 })
 
@@ -172,5 +179,25 @@ cmp.setup({
 })
 require'lspconfig'.clangd.setup{}
 require'lspconfig'.ocamllsp.setup{}
+
+require'nvim-treesitter.configs'.setup {
+  highlight = {
+    enable = true,
+    -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
+    -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
+    -- Using this option may slow down your editor, and you may see some duplicate highlights.
+    -- Instead of true it can also be a list of languages
+    additional_vim_regex_highlighting = false,
+  },
+  incremental_selection = {
+    enable = true,
+    keymaps = {
+      init_selection = "gnn", -- set to `false` to disable one of the mappings
+      node_incremental = "grn",
+      scope_incremental = "grc",
+      node_decremental = "grm",
+    },
+  },
+}
 
 vim.cmd[[colorscheme tokyonight]]

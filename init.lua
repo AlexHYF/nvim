@@ -20,7 +20,7 @@ vim.o.cc = "120"
 vim.o.foldmethod="expr"
 vim.o.foldexpr="nvim_treesitter#foldexpr()"
 vim.o.foldenable = false
-vim.g.mapleader = ","
+vim.g.mapleader = " "
 local function map(mode, shortcut, command)
   vim.api.nvim_set_keymap(mode, shortcut, command, { noremap = true, silent = true })
 end
@@ -34,12 +34,12 @@ local function imap(shortcut, command)
 end
 
 imap("jk", "<esc>")
-vim.keymap.set("i", "<C-s>", vim.lsp.buf.signature_help, { noremap = true })
 nmap("<leader>sw", ":lua require'telescope.builtin'.lsp_workspace_symbols{}<CR>")
 nmap("<leader>sf", ":lua require'telescope.builtin'.find_files{}<CR>")
+nmap("<leader>ff", ":lua require'telescope'.extensions.file_browser.file_browser({ path = '%:p:h' })<CR>")
 nmap("<leader>gd",":lua vim.lsp.buf.definition()<CR>")
 nmap("<leader>gD",":lua vim.lsp.buf.declaration()<CR>")
-nmap("<leader>gt",":FloatermNew lazygit<CR>")
+nmap("<leader>gt",":FloatermNew cd %:p:h && lazygit<CR>") -- Stupid hack, hope I can find something better
 nmap("K", ":lua vim.lsp.buf.hover()<CR>")
 require("lazy").setup({
   "neovim/nvim-lspconfig",
@@ -75,25 +75,39 @@ require("lazy").setup({
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate"
-  }
+  },
+  {
+    "nvim-telescope/telescope-file-browser.nvim",
+    dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" }
+  },
 })
 
 require'lspconfig'.rust_analyzer.setup {
-    settings = {
-        ['rust-analyzer'] = {
-            check = {
-                command = "clippy";
-            },
-            diagnostics = {
-                enable = true;
-            }
-        }
+  settings = {
+    ['rust-analyzer'] = {
+      check = {
+        command = "clippy";
+      },
+      diagnostics = {
+        enable = true;
+      }
     }
+  }
 }
 require"lualine".setup({
-    options = {
-      theme = 'tokyonight'
+  options = {
+    theme = 'tokyonight'
+  },
+  sections = {
+    lualine_c = {
+      {
+        'filename',
+        file_status = true, -- displays file status (readonly status, modified status)
+        path = 1 -- 0 = just filename, 1 = relative path, 2 = absolute path
+      }
     }
+  },
+
 })
 
 require'lspconfig'.lua_ls.setup {
@@ -127,7 +141,7 @@ require'lspconfig'.lua_ls.setup {
     Lua = {
       diagnostics = {
         globals = {"vim"}
-     }
+      }
     }
   }
 }
@@ -136,7 +150,7 @@ local cmp = require("cmp")
 cmp.setup({
   snippet = {
     expand = function(args)
-         vim.fn["vsnip#anonymous"](args.body)
+      vim.fn["vsnip#anonymous"](args.body)
     end,
   },
   preselect = cmp.PreselectMode.None,
@@ -151,19 +165,19 @@ cmp.setup({
       select = true,
     }),
     ["<S-Tab>"] = cmp.mapping(function(fallback)
-        if cmp.visible() then
-            cmp.select_prev_item()
-        else
-            fallback()
-        end
-      end, {"i", "s"}),
+      if cmp.visible() then
+        cmp.select_prev_item()
+      else
+        fallback()
+      end
+    end, {"i", "s"}),
     ["<Tab>"] = cmp.mapping(function(fallback)
-        if cmp.visible() then
-            cmp.select_next_item()
-        else
-            fallback()
-        end
-      end, {"i", "s"}),
+      if cmp.visible() then
+        cmp.select_next_item()
+      else
+        fallback()
+      end
+    end, {"i", "s"}),
     ["<C-d>"] = cmp.mapping.scroll_docs(-4),
     ["<C-f>"] = cmp.mapping.scroll_docs(4),
     ["<C-Space>"] = cmp.mapping.complete(),
@@ -178,6 +192,8 @@ cmp.setup({
   },
 })
 require'lspconfig'.clangd.setup{}
+require'lspconfig'.ocamllsp.setup{}
+require'lspconfig'.pyright.setup{}
 require'lspconfig'.ocamllsp.setup{}
 
 require'nvim-treesitter.configs'.setup {
@@ -201,3 +217,10 @@ require'nvim-treesitter.configs'.setup {
 }
 
 vim.cmd[[colorscheme tokyonight]]
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "lua",
+  callback = function()
+    vim.opt_local.shiftwidth = 2
+    vim.opt_local.tabstop = 2
+  end
+})

@@ -51,9 +51,10 @@ require("lazy").setup({
   "hrsh7th/vim-vsnip",
   "hrsh7th/cmp-nvim-lsp-signature-help",
   "voldikss/vim-floaterm",
+  { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
   {
     'nvim-telescope/telescope.nvim', tag = '0.1.6',
-    dependencies = { 'nvim-lua/plenary.nvim' }
+    dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope-fzf-native.nvim'}
   },
   {
     "folke/tokyonight.nvim",

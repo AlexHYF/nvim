@@ -35,6 +35,7 @@ end
 
 imap("jk", "<esc>")
 nmap("<leader>sw", ":lua require'telescope.builtin'.lsp_workspace_symbols{}<CR>")
+nmap("<leader>sd", ":lua require'telescope.builtin'.lsp_document_symbols{}<CR>")
 nmap("<leader>sf", ":lua require'telescope.builtin'.find_files{}<CR>")
 nmap("<leader>ff", ":lua require'telescope'.extensions.file_browser.file_browser({ path = '%:p:h' })<CR>")
 nmap("<leader>gd",":lua vim.lsp.buf.definition()<CR>")
@@ -62,6 +63,7 @@ require("lazy").setup({
     priority = 1000,
     opts = {},
   },
+  { "ellisonleao/gruvbox.nvim", priority = 1000 },
   {
     'nvim-lualine/lualine.nvim',
     lazy = false,
@@ -97,7 +99,7 @@ require'lspconfig'.rust_analyzer.setup {
 }
 require"lualine".setup({
   options = {
-    theme = 'tokyonight'
+    theme = 'gruvbox'
   },
   sections = {
     lualine_c = {
@@ -205,19 +207,10 @@ require'nvim-treesitter.configs'.setup {
     -- Using this option may slow down your editor, and you may see some duplicate highlights.
     -- Instead of true it can also be a list of languages
     additional_vim_regex_highlighting = false,
-  },
-  incremental_selection = {
-    enable = true,
-    keymaps = {
-      init_selection = "gnn", -- set to `false` to disable one of the mappings
-      node_incremental = "grn",
-      scope_incremental = "grc",
-      node_decremental = "grm",
-    },
-  },
+  }
 }
 
-vim.cmd[[colorscheme tokyonight]]
+vim.cmd[[colorscheme gruvbox]]
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "lua",
   callback = function()

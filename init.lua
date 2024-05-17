@@ -41,6 +41,7 @@ nmap("<leader>ff", ":lua require'telescope'.extensions.file_browser.file_browser
 nmap("<leader>gd",":lua vim.lsp.buf.definition()<CR>")
 nmap("<leader>gD",":lua vim.lsp.buf.declaration()<CR>")
 nmap("<leader>gt",":FloatermNew cd %:p:h && lazygit<CR>") -- Stupid hack, hope I can find something better
+nmap("<leader>e", ":lua vim.diagnostic.open_float()<CR>")
 nmap("K", ":lua vim.lsp.buf.hover()<CR>")
 require("lazy").setup({
   "neovim/nvim-lspconfig",
@@ -198,6 +199,7 @@ require'lspconfig'.clangd.setup{}
 require'lspconfig'.ocamllsp.setup{}
 require'lspconfig'.pyright.setup{}
 require'lspconfig'.ocamllsp.setup{}
+require'lspconfig'.texlab.setup{}
 
 require'nvim-treesitter.configs'.setup {
   highlight = {

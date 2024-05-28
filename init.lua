@@ -22,7 +22,7 @@ vim.o.foldexpr="nvim_treesitter#foldexpr()"
 vim.o.foldenable = false
 vim.g.mapleader = " "
 local function map(mode, shortcut, command)
-  vim.api.nvim_set_keymap(mode, shortcut, command, { noremap = true, silent = true })
+  vim.keymap.set(mode, shortcut, command, { noremap = true, silent = true })
 end
 
 local function nmap(shortcut, command)
@@ -42,7 +42,9 @@ nmap("<leader>gd",":lua vim.lsp.buf.definition()<CR>")
 nmap("<leader>gD",":lua vim.lsp.buf.declaration()<CR>")
 nmap("<leader>gt",":FloatermNew cd %:p:h && lazygit<CR>") -- Stupid hack, hope I can find something better
 nmap("<leader>e", ":lua vim.diagnostic.open_float()<CR>")
+nmap("<leader>tt", ":lua require'trouble'.toggle()<CR>")
 nmap("K", ":lua vim.lsp.buf.hover()<CR>")
+
 require("lazy").setup({
   "neovim/nvim-lspconfig",
   "hrsh7th/nvim-cmp",
@@ -52,6 +54,10 @@ require("lazy").setup({
   "hrsh7th/cmp-buffer",
   "hrsh7th/vim-vsnip",
   "hrsh7th/cmp-nvim-lsp-signature-help",
+  {
+    "folke/trouble.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+  },
   "voldikss/vim-floaterm",
   { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
   {
@@ -85,8 +91,9 @@ require("lazy").setup({
     dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" }
   },
 })
-
+local capabilities = require('cmp_nvim_lsp').default_capabilities()
 require'lspconfig'.rust_analyzer.setup {
+  capabilities = capabilities,
   settings = {
     ['rust-analyzer'] = {
       check = {
@@ -115,6 +122,7 @@ require"lualine".setup({
 })
 
 require'lspconfig'.lua_ls.setup {
+  capabilities = capabilities,
   on_init = function(client)
     local path = client.workspace_folders[1].name
     if vim.loop.fs_stat(path..'/.luarc.json') or vim.loop.fs_stat(path..'/.luarc.jsonc') then
@@ -164,13 +172,11 @@ cmp.setup({
   mapping = {
     ["<C-p>"] = cmp.mapping.select_prev_item(),
     ["<C-n>"] = cmp.mapping.select_next_item(),
-    ["<CR>"] = cmp.mapping.confirm({
-      behavior = cmp.ConfirmBehavior.Insert,
-      select = true,
-    }),
     ["<S-Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_prev_item()
+      elseif vim.fn["vsnip#jumpable"](-1) == 1 then
+        vim.fn.feedkeys(vim.api.nvim_replace_termcodes("<Plug>(vsnip-jump-prev)", true, true, true), "")
       else
         fallback()
       end
@@ -178,6 +184,8 @@ cmp.setup({
     ["<Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
+      elseif vim.fn["vsnip#jumpable"](1) == 1 then
+        vim.fn.feedkeys(vim.api.nvim_replace_termcodes("<Plug>(vsnip-jump-next)", true, true, true), "")
       else
         fallback()
       end
@@ -185,7 +193,8 @@ cmp.setup({
     ["<C-d>"] = cmp.mapping.scroll_docs(-4),
     ["<C-f>"] = cmp.mapping.scroll_docs(4),
     ["<C-Space>"] = cmp.mapping.complete(),
-    ["<C-e>"] = cmp.mapping.close(),
+    ["<C-e>"] = cmp.mapping.abort(),
+    ['<CR>'] = cmp.mapping.confirm({ select = true }),
   },
   sources =  {
     { name = 'nvim_lsp' },
@@ -195,11 +204,21 @@ cmp.setup({
     { name = 'nvim_lsp_signature_help' },
   },
 })
-require'lspconfig'.clangd.setup{}
-require'lspconfig'.ocamllsp.setup{}
-require'lspconfig'.pyright.setup{}
-require'lspconfig'.ocamllsp.setup{}
-require'lspconfig'.texlab.setup{}
+require'lspconfig'.clangd.setup{ capabilities = capabilities }
+require'lspconfig'.ocamllsp.setup{ capabilities = capabilities }
+require'lspconfig'.pyright.setup{ capabilities = capabilities }
+require'lspconfig'.ocamllsp.setup{ capabilities = capabilities }
+require'lspconfig'.texlab.setup{ capabilities = capabilities }
+require'lspconfig'.solargraph.setup{ capabilities = capabilities }
+require'lspconfig'.bashls.setup{ capabilities = capabilities }
+require'lspconfig'.jdtls.setup{
+  capabilities = capabilities,
+  settings = {
+    java = {
+      signature_help = { enabled = true }
+    }
+  }
+}
 
 require'nvim-treesitter.configs'.setup {
   highlight = {
@@ -220,3 +239,4 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.opt_local.tabstop = 2
   end
 })
+

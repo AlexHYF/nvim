@@ -21,6 +21,7 @@ vim.o.foldmethod="expr"
 vim.o.foldexpr="nvim_treesitter#foldexpr()"
 vim.o.foldenable = false
 vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
 local function map(mode, shortcut, command)
   vim.keymap.set(mode, shortcut, command, { noremap = true, silent = true })
 end
@@ -42,21 +43,29 @@ nmap("<leader>gd",":lua vim.lsp.buf.definition()<CR>")
 nmap("<leader>gD",":lua vim.lsp.buf.declaration()<CR>")
 nmap("<leader>gt",":FloatermNew cd %:p:h && lazygit<CR>") -- Stupid hack, hope I can find something better
 nmap("<leader>e", ":lua vim.diagnostic.open_float()<CR>")
-nmap("<leader>tt", ":lua require'trouble'.toggle()<CR>")
 nmap("K", ":lua vim.lsp.buf.hover()<CR>")
 
 require("lazy").setup({
   "neovim/nvim-lspconfig",
   "hrsh7th/nvim-cmp",
   "hrsh7th/cmp-nvim-lsp",
-  "hrsh7th/cmp-vsnip",
   "hrsh7th/cmp-path",
   "hrsh7th/cmp-buffer",
-  "hrsh7th/vim-vsnip",
+  "Olical/conjure",
+  "L3MON4D3/LuaSnip",
+  "saadparwaiz1/cmp_luasnip",
   "hrsh7th/cmp-nvim-lsp-signature-help",
   {
     "folke/trouble.nvim",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
+    opts = {},
+    cmd = "Trouble",
+    keys = {
+      {
+        "<leader>tt",
+        "<cmd>Trouble diagnostics toggle focus=true<cr>",
+        desc = "Diagnostics (Trouble)",
+      },
+    }
   },
   "voldikss/vim-floaterm",
   { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
@@ -159,10 +168,11 @@ require'lspconfig'.lua_ls.setup {
 }
 
 local cmp = require("cmp")
+local luasnip = require("luasnip")
 cmp.setup({
   snippet = {
     expand = function(args)
-      vim.fn["vsnip#anonymous"](args.body)
+      require('luasnip').lsp_expand(args.body)
     end,
   },
   preselect = cmp.PreselectMode.None,
@@ -175,8 +185,8 @@ cmp.setup({
     ["<S-Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_prev_item()
-      elseif vim.fn["vsnip#jumpable"](-1) == 1 then
-        vim.fn.feedkeys(vim.api.nvim_replace_termcodes("<Plug>(vsnip-jump-prev)", true, true, true), "")
+      elseif luasnip.locally_jumpable(-1) then
+        luasnip.jump(-1)
       else
         fallback()
       end
@@ -184,8 +194,8 @@ cmp.setup({
     ["<Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
-      elseif vim.fn["vsnip#jumpable"](1) == 1 then
-        vim.fn.feedkeys(vim.api.nvim_replace_termcodes("<Plug>(vsnip-jump-next)", true, true, true), "")
+      elseif luasnip.locally_jumpable(1) then
+        luasnip.jump(1)
       else
         fallback()
       end
@@ -194,7 +204,19 @@ cmp.setup({
     ["<C-f>"] = cmp.mapping.scroll_docs(4),
     ["<C-Space>"] = cmp.mapping.complete(),
     ["<C-e>"] = cmp.mapping.abort(),
-    ['<CR>'] = cmp.mapping.confirm({ select = true }),
+    ['<CR>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        if luasnip.expandable() then
+          luasnip.expand()
+        else
+          cmp.confirm({
+            select = true,
+          })
+        end
+      else
+        fallback()
+      end
+    end),
   },
   sources =  {
     { name = 'nvim_lsp' },
@@ -211,6 +233,7 @@ require'lspconfig'.ocamllsp.setup{ capabilities = capabilities }
 require'lspconfig'.texlab.setup{ capabilities = capabilities }
 require'lspconfig'.solargraph.setup{ capabilities = capabilities }
 require'lspconfig'.bashls.setup{ capabilities = capabilities }
+require'lspconfig'.clojure_lsp.setup{ capabilities = capabilities }
 require'lspconfig'.jdtls.setup{
   capabilities = capabilities,
   settings = {
@@ -231,6 +254,7 @@ require'nvim-treesitter.configs'.setup {
   }
 }
 
+vim.g.vimtex_view_method = 'skim'
 vim.cmd[[colorscheme gruvbox]]
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "lua",
@@ -239,4 +263,6 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.opt_local.tabstop = 2
   end
 })
-
+vim.diagnostic.config({
+  virtual_text = false,
+})
